@@ -1,0 +1,66 @@
+<?php
+// Replace these variables with your own reCAPTCHA keys
+$recaptcha_site_key = '6Lc9QUwpAAAAACRRPoclENyCgxhOEVHlqTwazJQI';
+$recaptcha_secret_key = '6Lc9QUwpAAAAAKK1GHMiW870UK46o9PVsa1z6DN6';
+
+// Function to verify reCAPTCHA response
+function verifyRecaptcha($response, $secretKey) {
+    $url = 'https://www.google.com/recaptcha/api/siteverify';
+    $data = array(
+        'secret' => $secretKey,
+        'response' => $response,
+    );
+
+    $options = array(
+        'http' => array(
+            'header' => "Content-type: application/x-www-form-urlencoded\r\n",
+            'method' => 'POST',
+            'content' => http_build_query($data),
+        ),
+    );
+
+    $context = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+    $jsonResult = json_decode($result, true);
+
+    return $jsonResult['success'];
+}
+
+// Process the form submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $recaptchaResponse = $_POST['g-recaptcha-response'];
+
+    // Verify the reCAPTCHA response
+    $isCaptchaValid = verifyRecaptcha($recaptchaResponse, $recaptcha_secret_key);
+
+    if ($isCaptchaValid) {
+        // The reCAPTCHA verification passed, handle the form submission logic here
+        echo 'reCAPTCHA verification passed. Form submitted successfully!';
+    } else {
+        // The reCAPTCHA verification failed, display an error message
+        echo 'reCAPTCHA verification failed. Please try again.';
+    }
+}
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>reCAPTCHA Example</title>
+ <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+</head>
+<body>
+
+<form method="post" action="">
+    <!-- Your form fields go here -->
+    
+    <!-- Add the reCAPTCHA widget -->
+    <div class="g-recaptcha" data-sitekey="<?php echo $recaptcha_site_key; ?>"></div>
+
+    <button type="submit">Submit</button>
+</form>
+
+</body>
+</html>
